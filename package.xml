@@ -17,8 +17,7 @@
   <depend>rosbridge_server</depend>
   <depend>tf2_web_republisher</depend>
   <depend>web_video_server</depend>
-  <depend>interactive_marker_proxy</depend>
-  <depend>depthcloud_encoder</depend>
+
 
   <export>
     <build_type>ament_cmake</build_type>
