@@ -1,0 +1,29 @@
+# Use ROS 2 Humble Hawksbill base image
+FROM ros:humble
+
+# Install Node.js
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+RUN apt-get update && apt-get install -y nodejs
+
+# Install ROS 2 packages needed for RVizWeb
+RUN apt-get update && apt-get install -y \
+    ros-humble-rosbridge-server \
+    ros-humble-tf2-web-republisher \
+    ros-humble-web-video-server \
+    ros-humble-interactive-marker-proxy \
+    ros-humble-depthcloud-encoder \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up workspace
+WORKDIR /ws
+COPY . /ws/src/rvizweb
+RUN . /opt/ros/humble/setup.sh && \
+    rosdep install --from-paths src --ignore-src -r -y && \
+    colcon build --packages-select rvizweb
+
+# Source ROS 2 and the workspace
+RUN echo "source /opt/ros/humble/setup.sh && source /ws/install/setup.bash" >> /root/.bashrc
+
+EXPOSE 9090 8001 9999
+
+CMD ["bash", "-c", "source /opt/ros/humble/setup.sh && source /ws/install/setup.bash && ros2 launch rvizweb rvizweb.launch.py"]

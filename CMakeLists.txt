@@ -1,17 +1,12 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.8)
 project(rvizweb)
 
-find_package(catkin REQUIRED COMPONENTS
-  rosbridge_server
-  roswww
-  tf2_web_republisher
-)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-catkin_package()
-
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-)
+# find dependencies
+find_package(ament_cmake REQUIRED)
 
 # Copy needed files to www build folder
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/www)
@@ -31,17 +26,19 @@ execute_process(
   COMMAND npm run build
 )
 
+ament_package()
+
 install(
   DIRECTORY
     launch
-    ${CMAKE_CURRENT_BINARY_DIR}/www/build/www
+    config
   DESTINATION
-    ${CATKIN_PACKAGE_SHARE_DESTINATION}
+    share/${PROJECT_NAME}
 )
 
 install(
   DIRECTORY
-    config
+    ${CMAKE_CURRENT_BINARY_DIR}/www/build/www
   DESTINATION
-    ${CATKIN_PACKAGE_SHARE_DESTINATION}
+    share/${PROJECT_NAME}/www
 )

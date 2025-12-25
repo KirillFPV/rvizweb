@@ -1,4 +1,4 @@
-# RVizWeb - RViz, but on your browser
+# RVizWeb - RViz, but on your browser (ROS 2 Humble Hawksbill Version)
 
 RVizWeb provides a convenient way of building and launching a web application
 with features similar to [RViz](https://github.com/ros-visualization/rviz).
@@ -6,23 +6,23 @@ with features similar to [RViz](https://github.com/ros-visualization/rviz).
 This project makes use of the following:
 
 * @jstnhuang's [ros-rviz](https://github.com/jstnhuang/ros-rviz) web component
-* @tork-a's [roswww](https://github.com/tork-a/roswww) web server
 * @RobotWebTools's [rosbridge_server](https://github.com/RobotWebTools/rosbridge_suite)
   and [tf2_web_republisher](https://github.com/RobotWebTools/tf2_web_republisher)
 
 ## Quickstart
 
-1. Create a directory for your catkin workspace:
+1. Create a directory for your ROS 2 workspace:
 
         mkdir -p ~/ws/src
         cd ~/ws/src
         git clone https://github.com/osrf/rvizweb/
 
-1. You will need the LTS version of Node.js. Add the PPA so that `rosdep` can fetch it:
+1. You will need the LTS version of Node.js:
 
-        curl -sL https://deb.nodesource.com/setup_8.x | sudo bash -
+        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+        sudo apt-get install -y nodejs
 
-1. Install ROS and system dependencies (assumes you already have ROS core):
+1. Install ROS 2 Humble dependencies:
 
         cd ~/ws
         rosdep install --from-paths src --ignore-src -r -y
@@ -31,151 +31,72 @@ This project makes use of the following:
    to generate and install the site:
 
         cd ~/ws
-        catkin_make install
+        colcon build --packages-select rvizweb
+
+1. Source your workspace:
+
+        . ~/ws/install/setup.bash
 
 1. Launch RVizWeb:
 
-        . ~/ws/install/setup.bash
-        roslaunch rvizweb rvizweb.launch
+        ros2 launch rvizweb rvizweb.launch.py
 
 1. Open the site on the browser
 
-    http://localhost:8001/rvizweb/www/index.html
+    http://localhost:8001/rvizweb/www/index.html  # Note: URL may vary based on how web content is served
 
 1. Let's try an example display to check everything is working. On the UI, click on the `+` and choose "Markers".
 
 1. Now open a new terminal and publish the following marker:
 
-        rostopic pub /visualization_marker visualization_msgs/Marker '{header: {frame_id: "base_link"}, id: 1, type: 1, action: 0, pose: {position: {x: 0., y: 0.2, z: 0.}, orientation: {x: 0.3, y: 0.2, z: 0.52, w: 0.85}}, scale: {x: 0.2, y: 0.3, z: 0.1}, color: {r: 1., g: 0., b: 1., a: 0.3}, lifetime: 50000000000}'
+        ros2 topic pub /visualization_marker visualization_msgs/msg/Marker '{header: {frame_id: "base_link"}, id: 1, type: 1, action: 0, pose: {position: {x: 0., y: 0.2, z: 0.}, orientation: {x: 0.3, y: 0.2, z: 0.52, w: 0.85}}, scale: {x: 0.2, y: 0.3, z: 0.1}, color: {r: 1., g: 0., b: 1., a: 0.3}, lifetime: {sec: 5, nanosec: 0}}'
 
 1. You should see a pink box show up on the site.
 
 ## Viewing URDF
 
-By default, RVizWeb will serve the `share` folder of all the ROS packages that
-are currently installed in the system to the following address by default:
+In ROS 2, web content serving may work differently than in ROS 1.
+The web interface will connect to ROS 2 topics via rosbridge.
 
-    http://localhost:8001/<package_name/
+Let's try an example using a simulated robot:
 
-This means that if you have robot description files installed, all these resources
-will be automatically served and are ready to be used by RVizWeb.
-
-Let's try an example using a PR2 simulated on Gazebo.
-
-1. Install the PR2 Gazebo package:
-
-        sudo apt install -y ros-kinetic-pr2-gazebo
-
-1. Launch the simulation:
-
-        roslaunch pr2_gazebo pr2_empty_world.launch
+1. Launch your robot simulation (e.g., using Gazebo)
 
 1. Launch RVizWeb:
 
-        roslaunch rvizweb rvizweb.launch
+        ros2 launch rvizweb rvizweb.launch.py
 
 1. Open the site on the browser
 
-    http://localhost:8001/rvizweb/www/index.html
-
 1. On the UI, click on the `+` and choose "Robot model".
 
-1. You should see the PR2 on the browser (it will be dark due to a texture issue).
+## Launch Parameters
 
-## Viewing interactive markers
+The RVizWeb launch file accepts the following parameters:
 
-To view interactive markers, you will need an [interactive_marker_proxy](https://wiki.ros.org/interactive_marker_proxy) for
-each interactive marker server you want to run, specifying a target frame and topic.
+* `websocket_port` - Port for the websocket bridge (default: 9090)
+* `packages_port` - Port where site and other package resources will be served (default: 8001)
+* `tf` - Set to false to prevent republishing TF (default: true)
+* `interactive_markers` - Set to false if you don't want to use interactive markers (default: true)
+* `interactive_markers_target_frame` - Target frame for interactive markers (default: /base_link)
+* `interactive_markers_topic` - Topic for interactive markers (default: /basic_controls)
+* `depth_cloud` - Set to true if you want depth cloud support (default: false)
+* `video_port` - Port for visualizing video streams (default: 9999)
+* `depth_topic` - Depth image topic for depthcloud_encoder (default: /camera/depth/image_raw)
+* `rgb_topic` - RGB image topic for depthcloud_encoder (default: /camera/rgb/image_raw)
+* `config_file` - Configuration file path (default: package config/configuration.json)
 
-By default, RVizWeb will run one of these proxies using `/base_link` as target frame and `/basic_controls` as the topic.
+Example with custom parameters:
 
-Let's see an example:
-
-1. Install `interactive_marker_tutorials`:
-
-        sudo apt install -y ros-kinetic-interactive-marker-tutorials
-
-1. Run the sample interactive marker server:
-
-        rosrun interactive_marker_tutorials basic_controls
-
-Launch RVizWeb as described in [Viewing URDF section](#viewing-urdf); this time click `+` and choose `Interactive markers`.
-You should see markers all around the viewer; you can modify their poses with the controls around them!
-
-The target frame and topic are configurable when launching the application, e.g.:
-
-    roslaunch rvizweb rvizweb.launch interactive_markers_target_frame:=/base_footprint interactive_markers_topic:=/advanced_controls
-
-If you need additional proxies, you can run them on separate consoles:
-
-    rosrun interactive_marker_proxy proxy topic_ns:=/your_topic target_frame:=/your_frame
-
-Finally, you can disable the proxy if you don't need it at all:
-
-    roslaunch rvizweb rvizweb.launch interactive_markers:=false
-
-## Viewing depth clouds
-
-To view depth clouds, you will need [web_video_server](https://wiki.ros.org/web_video_server) and [depthcloud_encoder](https://wiki.ros.org/depthcloud_encoder) running.
-
-Here's a basic example using Turtlebot:
-
-1. Install `turtlebot_gazebo`:
-
-        sudo apt install -y ros-kinetic-turtlebot-gazebo
-
-1. Run `turtlebot_world` in Gazebo:
-
-        roslaunch turtlebot_gazebo turtlebot_world.launch
-
-1. Launch RVizWeb enabling depth clouds:
-
-        roslaunch rvizweb rvizweb.launch depth_cloud:=true
-
-Open RVizWeb as described in [Viewing URDF section](#viewing-urdf); click `+` and choose `Depth cloud`.
-You should see Turtlebot's depth cloud stream in the viewer.
-
-Under the hood, `depthcloud_encoder` is subscribing to depth and RGB image streams and combining them into a single topic (`/depthcloud_encoded`).
-You can change the default image stream sources like this:
-
-        roslaunch rvizweb rvizweb.launch depth_cloud:=true depth_topic:=/your_depth_topic rgb_topic:=/your_rgb_topic
-
-## Use custom configuration on startup
-
-To launch `rvizweb` with a custom configuration you will need to provide a JSON file as argument to the launchfile:
-
-```
-roslaunch rvizweb rvizweb.launch config_file:=/path/to/config_file.json
-```
-
-The easiest way of generating a configuration file is the following:
-- Launch `rvizweb` without any particular arguments, and open it in the browser.
-- Open the components you want to be opened on start, and edit `Global options` at will.
-- Click on `LOAD CONFIG` at the left panel to open the popup with the complete configuration file, and copy its contents to a local file.
-- Send that file as an argument when launching the application as shown above.
-
-**Notes:**
-- Editing `config/configuration.json` won't work if the application is not reinstalled; providing a separate custom file is recommended.
-- Empty or undefined fields for `globalOptions` will be set to default.
+    ros2 launch rvizweb rvizweb.launch.py interactive_markers_target_frame:=/base_footprint interactive_markers_topic:=/advanced_controls
 
 ## RVizWeb in a Docker container
 
-To run `RVizWeb` inside a container use the scripts to build and run the application:
+To run `RVizWeb` inside a container with ROS 2, you'll need to adapt the Docker scripts for ROS 2.
 
-1. Clone the repository:
+## Notes about ROS 2 Migration
 
-        git clone https://github.com/osrf/rvizweb ~/rvizweb
-
-1. Build the docker image:
-
-        ~/rvizweb/docker/build.sh
-
-1. Run the container:
-
-        ~/rvizweb/docker/run.sh
-
-1. Once inside the container, launch `RVizWeb`:
-
-        roslaunch rvizweb rvizweb.launch
-
-The network will be shared with the host by default.
+* Launch files have been converted from XML to Python format
+* Dependencies have been updated for ROS 2 compatibility
+* The roswww component is not available in ROS 2, so web content serving may need to be handled differently
+* Topic and service interfaces follow ROS 2 conventions

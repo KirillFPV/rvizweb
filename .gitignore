@@ -1,4 +1,41 @@
-bower_components/
+```
+# Compiled and build artifacts
+*.o
+*.obj
+*.a
+*.so
+*.dll
+*.exe
+*.out
 build/
+dist/
+__pycache__/
+*.pyc
+*.pyo
+
+# Dependencies
 node_modules/
-package-lock.json
+venv/
+.venv/
+.env
+.env.local
+.env.*
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Editors
+.vscode/
+.idea/
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# OS
+.DS_Store
+Thumbs.db
+```
